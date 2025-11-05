@@ -21,6 +21,7 @@ public class InterfaceUsuario {
         System.out.println("* 1 - CADASTRAR USUÁRIO           *");
         System.out.println("* 2 - VER USUÁRIOS CADASTRADOS    *");
         System.out.println("* 3 - DELETAR USUÁRIO             *");
+        System.out.println("* 4 - ATUALIZAR USUÁRIO           *");
         System.out.println("* 0 - SAIR                        *");
         System.out.println("***********************************");
     }
@@ -66,9 +67,12 @@ public class InterfaceUsuario {
 
         int continuar = sc.nextInt();
 
-        if (continuar != 1){
+        if (continuar == 2){
             System.out.println("\nAté a proxima!");
             return false; // Não continuar (ativo = false)
+        }
+        else {
+            System.out.println("Digite uma opção válida.");
         }
         return true; // Continuar (ativo = verdadeiro)
     }

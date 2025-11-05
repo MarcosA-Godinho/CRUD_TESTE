@@ -36,6 +36,7 @@ public class Main {
         final int CADASTRAR_USUARIO = 1;
         final int VER_USUARIOS = 2;
         final int DELETAR_USUARIO = 3;
+        final int ATUALIZAR_USUARIO = 4;
         final int SAIR = 0;
 
         boolean ativo = true;
@@ -91,6 +92,43 @@ public class Main {
                     deletarUsuario(idParaDeletar);
                     break;
 
+                case ATUALIZAR_USUARIO:
+                    System.out.println("--- Atualizar Usuário ---");
+
+                    // 1. Pergunta QUAL usuário (o ID)
+                    long idParaAtualizar = ui.lerLong("Digite o ID do usuário que deseja ATUALIZAR: ");
+
+                    // 2. CHAMA O METODO DE VERIFICAÇÃO SE O USUÁRIO EXISTE
+                    if (usuarioExiste(idParaAtualizar)) {
+
+                        // 3. ID EXISTE! Agora sim, pede os NOVOS dados
+                        System.out.println("Usuário encontrado! Agora, digite os NOVOS dados para o ID " + idParaAtualizar + ":");
+                        String novoNome = ui.lerTexto("Digite o Novo Nome: ");
+                        String novoEmail = ui.lerTexto("Digite o Novo Email: ");
+                        long novoTelefone = ui.lerLong("Digite o Novo Telefone: ");
+
+                        // 4. Chama o DAO (dentro de um try-catch)
+                        try {
+                            atualizarUsuario(idParaAtualizar, novoNome, novoEmail, novoTelefone);
+                            // A mensagem de sucesso (LOG) já é impressa pelo DAO
+
+                        } catch (SQLException e) {
+                            if (e.getErrorCode() == 1062) {
+                                System.err.println("\nERRO: Já existe outro usuário com esse email.");
+                            } else {
+                                System.err.println("\nERRO de SQL: Falha ao atualizar usuário.");
+                                e.printStackTrace();
+                            }
+                        } catch (Exception e) {
+                            System.err.println("\nERRO INESPERADO: " + e.getMessage());
+                        }
+
+                    } else {
+                        // 5. ID NÃO EXISTE! Avisa e para.
+                        System.err.println("\nERRO: Nenhum usuário encontrado com o ID " + idParaAtualizar + ".");
+                    }
+                    break;
+
                 case SAIR:
 
                     System.out.println("Saindo do sistema...");
@@ -102,7 +140,7 @@ public class Main {
                     System.err.println("Opção inválida. Tente novamente.");
             }
 
-            if (OPCAO_ESCOLHIDA >= 1 && OPCAO_ESCOLHIDA <= 3) {
+            if (OPCAO_ESCOLHIDA >= 1 && OPCAO_ESCOLHIDA <= 4) {
                 ativo = ui.perguntarSeContinua();
             }
         }
