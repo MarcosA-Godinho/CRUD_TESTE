@@ -1,25 +1,21 @@
 package org.example;
 
-import java.util.Scanner;
-
 // Imports do Banco de Dados
+
 import java.sql.Connection;
 import java.sql.DriverManager;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.sql.Statement;
 
-import static org.example.UsuarioDao.criarUsuario;
+// Imports do DAO (Data Access Object)
+import static org.example.UsuarioDao.*;
+
 
 public class Main {
 
     // --- 1. Configurações do Banco de Dados ---
     private static final String URL_DB = "jdbc:mysql://localhost:3306/crud_java";
     private static final String USER = "root";
-
-    // ATENÇÃO: Coloque sua senha do root aqui
-    private static final String PASSWORD = "root";
+    private static final String PASSWORD = "root"; // Senha já está correta
 
     /**
      * Pega a conexão com o banco.(ESSENCIAL)
@@ -30,62 +26,86 @@ public class Main {
     }
 
     /**
-     * Ponto de Entrada: Agora interativo!(ESSENCIAL)
+     * Ponto de Entrada (ESSENCIAL)
      */
     public static void main(String[] args) {
 
+        InterfaceUsuario ui = new InterfaceUsuario();
+
+        // --- Constantes do Menu ---
+        final int CADASTRAR_USUARIO = 1;
+        final int VER_USUARIOS = 2;
+        final int DELETAR_USUARIO = 3;
+        final int SAIR = 0;
+
+        boolean ativo = true;
+
         while (ativo) {
 
+            ui.exibirMenu(); //CHAMA O MENU
+            int OPCAO_ESCOLHIDA = ui.lerOpcao(); //CHAMA A LEITURA DE OPÇÃO
 
-            // O "try-with-resources" garante que o scanner será fechado no final
-            try (Scanner scanner = new Scanner(System.in)) {
+            switch (OPCAO_ESCOLHIDA) {
 
-                System.out.println("--- Cadastro de Novo Usuário ---");
+                case CADASTRAR_USUARIO:
 
-                // 1. Pedir o Nome
-                System.out.print("Digite o Nome: ");
-                String nome = scanner.nextLine();
+                    System.out.println("--- Cadastro de Novo Usuário ---");
 
-                // 2. Pedir o Email (Obrigatório pela nossa tabela)
-                System.out.print("Digite o Email: ");
-                String email = scanner.nextLine();
+                    // 1. Pedir o Nome (usando a UI)
+                    String nome = ui.lerTexto("Digite o Nome: ");
+                    // 2. Pedir o Email (usando a UI)
+                    String email = ui.lerTexto("Digite o Email: ");
+                    // 3. Pedir o Telefone (usando a UI)
+                    long telefone = ui.lerLong("Digite o telefone: ");
 
-                //3.Pedir o Telefone
-                System.out.print("Digite o telefone:");
-                long telefone = scanner.nextLong();
+                    // O 'try' agora é APENAS para o SQL, o que está correto.
+                    try {
+                        // 3. Tentar criar o usuário no banco
+                        criarUsuario(nome, email, telefone);
+                        System.out.println("\nUsuário '" + nome + "' cadastrado com sucesso!");
 
-                // 3. Tentar criar o usuário no banco
-                criarUsuario(nome, email, telefone);
+                    } catch (SQLException e) {
+                        // Erro mais comum: Email duplicado
+                        if (e.getErrorCode() == 1062) {
+                            System.err.println("\nERRO: Este email já existe no banco de dados.");
+                        } else {
+                            // Outro erro de SQL (ex: banco offline, tabela não existe)
+                            System.err.println("\nERRO de SQL: Falha ao cadastrar usuário.");
+                            e.printStackTrace();
+                        }
+                    } catch (Exception e) {
+                        // Qualquer outro erro
+                        System.err.println("\nERRO INESPERADO: " + e.getMessage());
+                    }
+                    break;
 
-                System.out.println("\nUsuário '" + nome + "' cadastrado com sucesso!");
+                case VER_USUARIOS:
+                    verUsuario(); //
+                    break;
 
-            } catch (SQLException e) {
-                // Erro mais comum: Email duplicado
-                if (e.getErrorCode() == 1062) { // 1062 é o código de erro do MySQL para "Duplicate entry"
-                    System.err.println("\nERRO: Este email já existe no banco de dados.");
-                } else {
-                    // Outro erro de SQL (ex: banco offline, tabela não existe)
-                    System.err.println("\nERRO de SQL: Falha ao cadastrar usuário.");
-                    e.printStackTrace();
-                }
-            } catch (Exception e) {
-                // Qualquer outro erro (ex: falha ao ler o scanner)
-                System.err.println("\nERRO INESPERADO: " + e.getMessage());
+                case DELETAR_USUARIO:
+                    System.out.println("--- Deletar Usuário ---");
+                    // 1. Pergunta qual ID deve ser deletado
+                    long idParaDeletar = ui.lerLong("Digite o ID do usuário que deseja deletar: ");
+                    // 2. Chama o metodo do DAO
+                    deletarUsuario(idParaDeletar);
+                    break;
+
+                case SAIR:
+
+                    System.out.println("Saindo do sistema...");
+                    ativo = false; // Define 'ativo' como falso para ENCERRAR o loop 'while'
+                    break;
+
+                default:
+                    // Se o usuário digitar -1 (erro do InputMismatch) ou qualquer outro número
+                    System.err.println("Opção inválida. Tente novamente.");
+            }
+
+            if (OPCAO_ESCOLHIDA >= 1 && OPCAO_ESCOLHIDA <= 3) {
+                ativo = ui.perguntarSeContinua();
             }
         }
+        ui.fechar();
     }
-
-    /**
-     * Metodo CREATE: Insere um novo usuário no banco.
-     * (ESSENCIAL)
-     */
-
-
-    //
-    // --- MÉTODOS APAGADOS ---
-    //
-    // O listarUsuarios() foi apagado.
-    // O atualizarUsuario() foi apagado.
-    // O deletarUsuario() foi apagado.
-    //
 }
